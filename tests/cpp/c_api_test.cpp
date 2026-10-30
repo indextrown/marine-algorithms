@@ -1,6 +1,7 @@
 #include "marine_c.h"
 
 #include "marine/geodesy.hpp"
+#include "marine/units.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -16,6 +17,13 @@ const geo::Coordinate kBusanCpp{kBusan.latitude, kBusan.longitude};
 const geo::Coordinate kFukuokaCpp{kFukuoka.latitude, kFukuoka.longitude};
 
 } // namespace
+
+TEST_CASE("C API: 단위 변환") {
+    CHECK(ma_meters_to_nautical_miles(208'000) == marine::units::meters_to_nautical_miles(208'000));
+    CHECK(ma_nautical_miles_to_meters(3.5) == marine::units::nautical_miles_to_meters(3.5));
+    CHECK(ma_knots_to_meters_per_second(12) == marine::units::knots_to_meters_per_second(12));
+    CHECK(ma_meters_per_second_to_knots(6.2) == marine::units::meters_per_second_to_knots(6.2));
+}
 
 TEST_CASE("C API: 하버사인") {
     CHECK(ma_haversine_distance(kBusan, kFukuoka) == geo::haversine_distance(kBusanCpp, kFukuokaCpp));

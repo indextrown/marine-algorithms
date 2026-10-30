@@ -45,6 +45,7 @@ if(MARINE_BUILD_TESTS)
     add_executable(marine_tests
         tests/cpp/haversine_test.cpp
         tests/cpp/vincenty_test.cpp
+        tests/cpp/units_test.cpp
         tests/cpp/c_api_test.cpp
     )
     target_link_libraries(marine_tests PRIVATE marine marine_c Catch2::Catch2WithMain)

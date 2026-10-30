@@ -31,7 +31,7 @@
 - [x] Vincenty C 다리층과 Swift 바인딩. C는 `ma_status` 반환 + 출력 포인터, Swift는 `throws(GeodesyError)`
 - [ ] 구면 목적지 좌표(출발점 + 방위 + 거리 → 도착점)
 - [ ] 항정선 거리, 방위, 목적지 좌표. 날짜변경선 처리
-- [ ] 단위 변환: m ↔ 해리(nm), m/s ↔ 노트(kn)
+- [x] 단위 변환: m ↔ 해리(nm), m/s ↔ 노트(kn) (`marine::units`, `ma_*`, Swift `Units`)
 
 ## 0.3 충돌 판단 `collision`
 
