@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - run: cmake -S . -B build -G Ninja -DMARINE_SANITIZE=ON
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+
+  swift:
+    runs-on: ubuntu-latest
+    container: swift:6.2-noble  # Ubuntu 24.04: libstdc++ 13에 std::expected가 있다
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
