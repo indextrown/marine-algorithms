@@ -53,6 +53,13 @@ typedef struct ma_direct {
 /// GPS가 쓰는 WGS84 타원체.
 ma_ellipsoid ma_wgs84(void);
 
+/* 단위 변환. 해리 = 1852m, 노트 = 1해리/시 */
+
+double ma_meters_to_nautical_miles(double meters);
+double ma_nautical_miles_to_meters(double nautical_miles);
+double ma_knots_to_meters_per_second(double knots);
+double ma_meters_per_second_to_knots(double meters_per_second);
+
 /* 구면 (하버사인) */
 
 /// 대권 거리(m). 하버사인 공식.

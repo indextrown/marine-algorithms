@@ -8,7 +8,8 @@
 |---|---|---|
 | `geodesy` | 구면 대권 거리·방위(하버사인) | 완료 |
 | `geodesy` | 타원체 정문제·역문제(Vincenty) | 완료 |
-| `geodesy` | 항정선, 구면 목적지 좌표, 단위 변환 | 예정 |
+| `units` | 단위 변환: m ↔ 해리(nm), m/s ↔ 노트(kn) | 완료 |
+| `geodesy` | 항정선, 구면 목적지 좌표 | 예정 |
 | `collision` | CPA / TCPA | 예정 |
 | `interpolation` | 추측항법, 위치 보간 | 예정 |
 | `filter` | 칼만 필터 | 예정 |
@@ -57,6 +58,8 @@ import MarineAlgorithms
 let busan = Coordinate(latitude: 35.1028, longitude: 129.0403)
 let fukuoka = Coordinate(latitude: 33.5902, longitude: 130.4017)
 Geodesy.haversineDistance(from: busan, to: fukuoka)   // 구면 근사, ≈ 208 km
+Units.metersToNauticalMiles(208_000)                  // ≈ 112.3 해리
+Units.knotsToMetersPerSecond(12)                      // 12노트 ≈ 6.17 m/s
 
 do {
     let r = try Geodesy.vincentyInverse(from: busan, to: fukuoka)   // WGS84
