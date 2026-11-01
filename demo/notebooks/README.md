@@ -28,5 +28,12 @@ VS Code에서 열 때는 커널로 `demo/notebooks/.venv`의 Python을 고른다
 | `01_dead_reckoning.ipynb` | 직선 외삽(직선 DR): SOG·COG를 북·동으로 나누기, 위도·경도 변환, 잡음과 선회에서 틀리는 모습 | 개념 1·2 |
 | `02_kalman_filter.ipynb` | 칼만 필터로 다듬은 위치·속도로 직선 외삽 | 개념 3 |
 | `03_extended_kalman_filter.ipynb` | 확장 칼만 필터로 도는 속도까지 추정해 곡선 외삽, 세 방법 비교 | 개념 4 |
+| `04_scenario_comparison.ipynb` | 배의 운동 9가지 × 보고 환경 3가지(Class A, 열악, Class B)에서 세 방법과 제자리(0차)를 비교 | 응용 1~3 |
 
-`02_applications/sim.py`는 해양 응용 노트북이 함께 쓰는 가짜 배 시뮬레이션(정답 항적, 잡음 섞인 AIS 보고, 오차 채점)이다.
+`02_applications/`의 파이썬 파일:
+
+| 파일 | 내용 |
+|---|---|
+| `sim.py` | 응용 1~3이 쓰는 가짜 배 시뮬레이션: 직진하다 한 번 선회하는 정답 항적, 잡음 섞인 AIS 보고, 오차 채점 |
+| `scenarios.py` | 응용 4가 쓰는 시나리오 9가지와 수신 조건 3가지. 보고 간격은 ITU-R M.1371의 Class A·B 규칙을 단순화 |
+| `methods.py` | 응용 1~3의 세 방법(직선 DR, 칼만 필터, EKF)을 응용 4에서 함께 쓰려고 모아 둔 것 |
