@@ -14,6 +14,20 @@
 | `interpolation` | 추측항법, 위치 보간 | 예정 |
 | `filter` | 칼만 필터 | 예정 |
 
+## 아키텍처
+
+계산은 C++ 코어가 하고, Swift는 C 함수만 부른다. 가운데 C 다리층이 C 타입과 C++ 타입을 서로 바꾼다.
+
+![C++ 코어, C 다리층, Swift 래퍼의 연결 구조](docs/images/architecture.png)
+
+실패는 층을 넘을 때마다 그 언어의 방식으로 바뀐다. C++ 예외는 C 경계를 넘지 않는다.
+
+| 층     | 성공                  | 실패                                             |
+| ----- | ------------------- | ---------------------------------------------- |
+| C++   | `std::expected`에 값  | `std::unexpected(GeodesyError::not_converged)` |
+| C     | `MA_OK`, 결과는 `out`에 | `MA_NOT_CONVERGED`, `out`은 그대로                 |
+| Swift | 값을 반환               | `throw GeodesyError.notConverged`              |
+
 ## 구조
 
 ```
