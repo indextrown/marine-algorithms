@@ -3,6 +3,7 @@
 /.build/
 /.swiftpm/
 *.xcodeproj
+!/demo/MarineAlgorithmsDemo.xcodeproj/
 xcuserdata/
 compile_commands.json
 /.obsidian/

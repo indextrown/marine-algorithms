@@ -39,6 +39,7 @@ tests/cpp/             C++ 테스트 (Catch2)
 tests/data/            테스트 기준값 (GeodTest 일부)
 docs/DESIGN.md         설계 규칙
 docs/ROADMAP.md        개발 계획
+demo/                  SwiftUI 데모 앱
 ```
 
 ## 빌드와 테스트
@@ -85,6 +86,21 @@ do {
     // 대척점 근처. 하버사인으로 대신한다.
 }
 ```
+
+## 데모 앱
+
+`demo/`에 예제를 목록으로 모아 둔 SwiftUI 앱이 있다. 상위 폴더의 패키지를 로컬로 연결하므로 라이브러리를 고치면 바로 반영된다.
+
+```sh
+open demo/MarineAlgorithmsDemo.xcodeproj
+```
+
+| 묶음 | 예제 |
+|---|---|
+| 측지 계산 | 하버사인 거리, Vincenty 역문제(하버사인과 비교), Vincenty 정문제, 대척점에서 실패하기 |
+| 단위 변환 | 거리 m ↔ 해리, 속력 m/s ↔ 노트 |
+
+iOS 17 이상에서 돌아간다. 예제를 더하려면 `demo/MarineAlgorithmsDemo/ExampleList/Example.swift`의 `Example`에 case를 추가하고 화면을 `Examples/` 아래에 만든다.
 
 ## 거리 계산 두 가지
 
