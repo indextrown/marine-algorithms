@@ -39,6 +39,7 @@ tests/cpp/             C++ 테스트 (Catch2)
 tests/data/            테스트 기준값 (GeodTest 일부)
 docs/DESIGN.md         설계 규칙
 docs/ROADMAP.md        개발 계획
+docs/gitflow.md        브랜치 전략(Git Flow)과 명령어
 demo/                  SwiftUI 데모 앱
 ```
 
