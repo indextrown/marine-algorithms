@@ -216,6 +216,133 @@ git flow 명령은 일반 git 명령 여러 줄을 묶은 것이다. 아래처�
 
 규칙을 외우지 않아도 되고, 순서를 빼먹거나(태그를 안 달거나 develop에 반영을 안 하거나) 할 일이 없다는 것이 git flow를 쓰는 이유다.
 
+## 이 저장소에서 기능 하나 만들기
+
+연습 저장소에서는 `feature finish`로 로컬에서 합쳤다. **이 저장소에서는 PR로 합친다.** GitHub에서 CI가 돌고, 변경 기록이 PR로 남기 때문이다. 그래서 `finish` 대신 "올리기 → PR → GitHub에서 병합 → 로컬 정리" 순서가 된다.
+
+```
+ 내 컴퓨터                                   GitHub
+ ─────────                                   ──────
+ ① develop 최신으로 (git pull)
+ ② feature start  ── feature/x 생김
+ ③ 작업·커밋 (여러 번)
+ ④ publish / push  ───────────────────────▶  origin/feature/x
+ ⑤                                           PR: feature/x → develop
+ ⑥                                           CI 통과 확인
+ ⑦                                           병합 → develop 에 들어감, feature/x 삭제
+ ⑧ develop 받고, 로컬 feature/x 지우기 ◀───
+```
+
+예: 이슈 #10(잘못된 좌표 검사)을 고치는 기능
+
+### ① develop을 최신으로
+
+```sh
+git switch develop
+git pull
+```
+
+**꼭 먼저 한다.** `git flow feature start`는 원격을 받아 오기는 하지만 브랜치는 **내 로컬 develop**에서 만든다. 로컬 develop이 뒤처져 있으면 남(또는 다른 컴퓨터의 내)가 올린 커밋이 빠진 채로 시작한다(실제로 확인함).
+
+### ② 기능 시작
+
+```sh
+git flow feature start input-validation
+```
+```
+Created branch 'feature/input-validation' from 'develop'
+```
+
+- 이름은 영어 소문자와 `-`. `feature/`는 자동으로 붙으니 쓰지 않는다.
+- 지금 어느 브랜치인지 헷갈리면 `git branch --show-current`.
+
+### ③ 작업하고 커밋
+
+평소처럼 한다. 커밋은 여러 번 해도 된다.
+
+```sh
+git add include/marine/geodesy.hpp src/geodesy/vincenty.cpp
+git commit -m "[fix] 범위 밖·NaN 좌표를 invalid_coordinate로 알린다"
+```
+
+### ④ GitHub에 올리기
+
+```sh
+git flow publish        # 처음 한 번: 원격에 feature/input-validation 을 만들고 연결
+git push                # 그다음 커밋부터는 그냥 push
+```
+
+### ⑤ PR 만들기
+
+```sh
+gh pr create --fill
+```
+
+- 기본 브랜치가 `develop`이라 `--base develop`을 안 붙여도 develop으로 간다.
+- `--fill`은 커밋 메시지로 제목과 본문을 채운다. 본문에 `Closes #10`을 적어 두면 병합될 때 이슈가 자동으로 닫힌다.
+- 웹에서 만들어도 된다. 그때도 대상(base)이 `develop`인지 확인한다.
+
+### ⑥ CI 확인
+
+```sh
+gh pr checks --watch
+```
+
+`cpp`와 `swift`가 모두 `pass`여야 한다. 실패하면 고치고 커밋 → `git push` 하면 PR에 자동으로 더해지고 CI가 다시 돈다.
+
+### ⑦ 병합
+
+GitHub PR 화면에서 **Create a merge commit**으로 병합하고 브랜치를 지운다. 터미널에서는:
+
+```sh
+gh pr merge --merge --delete-branch
+```
+
+### ⑧ 로컬 정리
+
+```sh
+git switch develop
+git pull                                        # 병합된 develop 받기
+git flow feature delete input-validation        # 로컬 feature 브랜치 지우기
+git fetch --prune                               # 지워진 원격 브랜치 표시도 정리
+```
+
+`git flow overview`의 `Active topic branches`가 비어 있으면 끝이다.
+
+### 하는 중에 develop이 바뀌었다면 (필요할 때만)
+
+다른 PR이 먼저 병합돼서 내 기능과 충돌하거나, 그 코드가 필요할 때만 한다. 아니면 GitHub가 병합할 때 알아서 합친다.
+
+```sh
+git switch develop && git pull                  # develop 최신으로 (update 는 로컬 develop 기준이다)
+git switch feature/input-validation
+git flow update                                 # develop 위로 내 커밋을 옮긴다(rebase)
+git push --force-with-lease                     # 이미 올린 브랜치라 그냥 push 는 거부된다
+```
+
+rebase는 내 커밋을 새 커밋으로 다시 만들기 때문에, 이미 올린 브랜치에 그냥 `git push` 하면 `rejected (non-fast-forward)`로 거부된다(실제로 확인함). `--force-with-lease`는 "원격이 내가 마지막으로 본 상태 그대로일 때만 덮어쓰기"라서 `--force`보다 안전하다. **내 feature 브랜치에만** 쓴다. `develop`·`main`에는 절대 쓰지 않는다.
+
+### PR 방식에서 하지 않는 것
+
+| 하지 말 것 | 이유 |
+|---|---|
+| `git flow feature finish` | 로컬에서 develop에 합쳐 버린다. 그대로 push 하면 PR과 CI를 건너뛴다 |
+| `develop`에서 바로 커밋 | 기능 브랜치 없이 develop이 바뀐다. 실수했으면 [실수했을 때](#실수했을-때) 참고 |
+| 다른 기능을 같은 브랜치에 섞기 | PR 하나에 기능 하나. 새 기능은 ①부터 새로 |
+
+### 한 장 요약
+
+| 단계 | 명령 |
+|---|---|
+| ① 최신으로 | `git switch develop && git pull` |
+| ② 시작 | `git flow feature start <이름>` |
+| ③ 작업 | `git add …` / `git commit -m "…"` |
+| ④ 올리기 | `git flow publish` (처음) / `git push` (이후) |
+| ⑤ PR | `gh pr create --fill` |
+| ⑥ CI | `gh pr checks --watch` |
+| ⑦ 병합 | `gh pr merge --merge --delete-branch` |
+| ⑧ 정리 | `git switch develop && git pull && git flow feature delete <이름> && git fetch --prune` |
+
 ## 실수했을 때
 
 | 상황 | 메시지·증상 | 해결 |
@@ -368,17 +495,18 @@ GitHub PR로 리뷰와 CI를 거친다. 그래서 기능은 로컬에서 `finish
 
 ### 기능 하나
 
-```sh
-git flow feature start input-validation          # develop에서 시작
-# … 작업, 커밋 …
-git flow feature publish                         # 원격에 올리기
-gh pr create --base develop --fill               # develop 으로 PR
-# GitHub에서 CI 통과 후 병합
-git switch develop && git pull
-git flow feature delete input-validation         # 로컬 브랜치 정리
-```
+1부 [이 저장소에서 기능 하나 만들기](#이-저장소에서-기능-하나-만들기)의 ①~⑧을 따른다. 요약:
 
-혼자 빠르게 할 때는 PR 없이 `git flow feature finish --no-ff` 후 `git push`로 끝내도 된다.
+```sh
+git switch develop && git pull                   # ① 최신으로 (빼먹으면 옛 develop 에서 시작한다)
+git flow feature start input-validation          # ②
+# … 작업, 커밋 …                                  # ③
+git flow publish                                 # ④
+gh pr create --fill                              # ⑤ 기본 브랜치가 develop
+gh pr checks --watch                             # ⑥
+gh pr merge --merge --delete-branch              # ⑦
+git switch develop && git pull && git flow feature delete input-validation && git fetch --prune   # ⑧
+```
 
 ### 버전 배포
 
