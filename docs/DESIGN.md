@@ -29,6 +29,26 @@ C 다리층        bindings/c/                   extern "C", ma_ 접두사
 | 실패하지 않는 함수는 결과를 값으로 돌려준다(`ma_haversine_distance`) | 쓰는 쪽이 상태를 확인할 필요가 없다 |
 | 콜백을 두지 않는다(pull 방식) | 거꾸로 넘는 콜백은 바인딩마다 가장 까다롭다 |
 
+## 잘못된 입력
+
+공개 함수는 입력을 먼저 검사한다. 잘못된 입력을 "수렴하지 않음" 같은 다른 원인으로 보고하지 않기 위해서다.
+
+| 무엇 | 유효한 값 |
+|---|---|
+| 위도 | [-90, 90] |
+| 경도 | 유한값. 범위 밖은 정규화해서 계산한다(361° = 1°) |
+| 방위·거리(`vincenty_direct`) | 유한값. 음수 거리는 반대 방향 |
+| 타원체 | 장반경 > 0, 편평률 [0, 1) |
+
+NaN·무한대는 모두 잘못된 값이다.
+
+| 함수 종류 | 잘못된 입력일 때 |
+|---|---|
+| 실패할 수 있는 함수(`vincenty_*`) | C++ `invalid_argument` → C `MA_INVALID_ARGUMENT` → Swift `.invalidArgument` |
+| 실패하지 않는 함수(`haversine_distance`, `initial_bearing`) | NaN을 돌려준다. `std::sqrt(-1)`처럼 수학 함수의 관례를 따르고, 반환형을 바꾸지 않는다 |
+
+C에 `ma_status` 값을 더하면 Swift `GeodesyError.init(_:)`에도 case를 함께 더한다. 빠뜨리면 `preconditionFailure`로 멈춘다.
+
 ## Swift 바인딩
 
 - C 값은 Swift 값 타입으로 바꿔 돌려준다. 네이티브 자원을 쥔 타입만 `class` + `deinit`에서 `ma_*_free`.

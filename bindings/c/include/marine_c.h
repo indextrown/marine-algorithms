@@ -21,7 +21,8 @@ typedef enum ma_status {
     MA_OK = 0,
     /// 반복 계산이 수렴하지 않았다(Vincenty 역문제의 대척점 근처).
     MA_NOT_CONVERGED = 1,
-    /// out 포인터가 NULL이다.
+    /// 인자가 잘못됐다. out 포인터가 NULL이거나, 위도가 [-90, 90] 밖이거나,
+    /// 위도·경도·방위·거리가 NaN·무한대이거나, 타원체가 장반경 > 0, 편평률 [0, 1)을 벗어났다.
     MA_INVALID_ARGUMENT = 2,
 } ma_status;
 
@@ -62,13 +63,13 @@ double ma_meters_per_second_to_knots(double meters_per_second);
 
 /* 구면 (하버사인) */
 
-/// 대권 거리(m). 하버사인 공식.
+/// 대권 거리(m). 하버사인 공식. 잘못된 좌표면 NaN.
 double ma_haversine_distance(ma_coordinate from, ma_coordinate to);
 
-/// 처음 방위(도, [0, 360)).
+/// 처음 방위(도, [0, 360)). 잘못된 좌표면 NaN.
 double ma_initial_bearing(ma_coordinate from, ma_coordinate to);
 
-/* 타원체 (Vincenty 1975). 대척점 근처에서 MA_NOT_CONVERGED. */
+/* 타원체 (Vincenty 1975). 대척점 근처에서 MA_NOT_CONVERGED, 잘못된 입력이면 MA_INVALID_ARGUMENT. */
 
 ma_status ma_vincenty_inverse(ma_coordinate from, ma_coordinate to, ma_ellipsoid ellipsoid,
                               ma_inverse* out);

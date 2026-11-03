@@ -19,8 +19,9 @@ ma_direct to_c(const geo::DirectSolution& r) noexcept { return {to_c(r.destinati
 ma_status to_c(geo::GeodesyError error) noexcept {
     switch (error) {
     case geo::GeodesyError::not_converged: return MA_NOT_CONVERGED;
+    case geo::GeodesyError::invalid_argument: return MA_INVALID_ARGUMENT;
     }
-    return MA_NOT_CONVERGED;
+    return MA_INVALID_ARGUMENT;
 }
 
 } // namespace

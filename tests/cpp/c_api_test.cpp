@@ -5,6 +5,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cmath>
+#include <limits>
+
 // C 다리층은 코어 결과를 그대로 넘겨야 한다. 정확도는 코어 테스트에서 본다.
 
 namespace geo = marine::geodesy;
@@ -28,6 +31,7 @@ TEST_CASE("C API: 단위 변환") {
 TEST_CASE("C API: 하버사인") {
     CHECK(ma_haversine_distance(kBusan, kFukuoka) == geo::haversine_distance(kBusanCpp, kFukuokaCpp));
     CHECK(ma_initial_bearing(kBusan, kFukuoka) == geo::initial_bearing(kBusanCpp, kFukuokaCpp));
+    CHECK(std::isnan(ma_haversine_distance({95, 0}, kFukuoka)));
 }
 
 TEST_CASE("C API: WGS84") {
@@ -67,6 +71,17 @@ TEST_CASE("C API: Vincenty") {
         const auto expected = geo::vincenty_inverse(kBusanCpp, kFukuokaCpp, {geo::kEarthRadiusMeters, 0});
         REQUIRE(expected);
         CHECK(out.distance == expected->distance);
+    }
+    SECTION("잘못된 입력이면 MA_INVALID_ARGUMENT, out은 그대로") {
+        const double nan = std::numeric_limits<double>::quiet_NaN();
+        ma_inverse inv{-1, -1, -1};
+        CHECK(ma_vincenty_inverse({nan, 0}, kFukuoka, ma_wgs84(), &inv) == MA_INVALID_ARGUMENT);
+        CHECK(ma_vincenty_inverse(kBusan, {95, 0}, ma_wgs84(), &inv) == MA_INVALID_ARGUMENT);
+        CHECK(inv.distance == -1);
+        ma_direct dir{{-1, -1}, -1};
+        CHECK(ma_vincenty_direct(kBusan, nan, 1000, ma_wgs84(), &dir) == MA_INVALID_ARGUMENT);
+        CHECK(ma_vincenty_direct(kBusan, 0, 1000, {0, 0}, &dir) == MA_INVALID_ARGUMENT);
+        CHECK(dir.final_bearing == -1);
     }
     SECTION("out이 NULL이면 MA_INVALID_ARGUMENT") {
         CHECK(ma_vincenty_inverse(kBusan, kFukuoka, ma_wgs84(), nullptr) == MA_INVALID_ARGUMENT);

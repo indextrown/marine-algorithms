@@ -3,6 +3,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <cmath>
+#include <limits>
+
 using marine::geodesy::Coordinate;
 using Catch::Matchers::WithinAbs;
 using Catch::Matchers::WithinRel;
@@ -41,4 +44,23 @@ TEST_CASE("initial_bearing") {
     CHECK_THAT(marine::geodesy::initial_bearing({0, 0}, {0, 1}), WithinAbs(90, 1e-9));
     CHECK_THAT(marine::geodesy::initial_bearing({0, 0}, {-1, 0}), WithinAbs(180, 1e-9));
     CHECK_THAT(marine::geodesy::initial_bearing({0, 0}, {0, -1}), WithinAbs(270, 1e-9));
+}
+
+TEST_CASE("하버사인: 잘못된 좌표는 NaN") {
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    const Coordinate ok{35, 129};
+    const Coordinate bad[] = {
+        {nan, 0}, {0, nan}, {inf, 0}, {0, -inf}, {90.000001, 0}, {-90.000001, 0},
+    };
+    for (const Coordinate c : bad) {
+        CAPTURE(c.latitude, c.longitude);
+        CHECK(std::isnan(marine::geodesy::haversine_distance(c, ok)));
+        CHECK(std::isnan(marine::geodesy::haversine_distance(ok, c)));
+        CHECK(std::isnan(marine::geodesy::initial_bearing(c, ok)));
+        CHECK(std::isnan(marine::geodesy::initial_bearing(ok, c)));
+    }
+    // 극은 유효하다.
+    CHECK_THAT(marine::geodesy::haversine_distance({90, 0}, {-90, 0}),
+               WithinRel(marine::geodesy::kEarthRadiusMeters * 3.141592653589793, 1e-12));
 }
