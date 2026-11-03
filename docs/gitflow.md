@@ -288,7 +288,11 @@ gh pr create --fill
 gh pr checks --watch
 ```
 
-`cpp`와 `swift`가 모두 `pass`여야 한다. 실패하면 고치고 커밋 → `git push` 하면 PR에 자동으로 더해지고 CI가 다시 돈다.
+`cpp`와 `swift`가 모두 `pass`여야 한다.
+
+> **주의: `no checks reported`는 통과가 아니다.** PR을 만든 직후에는 GitHub가 아직 CI를 등록하지 않아서 `gh pr checks --watch`가 이 한 줄만 찍고 바로 끝난다. 몇 초 기다렸다가 다시 실행하고, **`cpp`·`swift` 두 줄이 `pass`로 보인 뒤에** 병합한다. `gh pr checks --watch && gh pr merge …`처럼 한 줄로 이어 쓰지 않는다. 체크가 없으면 성공으로 끝나서 바로 병합까지 가 버린다.
+
+실패하면 고치고 커밋 → `git push` 하면 PR에 자동으로 더해지고 CI가 다시 돈다.
 
 ### ⑦ 병합
 
@@ -342,7 +346,7 @@ rebase는 내 커밋을 새 커밋으로 다시 만들기 때문에, 이미 올�
 | ③ 작업 | `git add …` / `git commit -m "…"` |
 | ④ 올리기 | `git flow publish` (처음) / `git push` (이후) |
 | ⑤ PR | `gh pr create --fill` |
-| ⑥ CI | `gh pr checks --watch` |
+| ⑥ CI | `gh pr checks --watch` (`cpp`·`swift` 두 줄이 `pass`인지 본다) |
 | ⑦ 병합 | `gh pr merge --merge --delete-branch` |
 | ⑧ 정리 | `git switch develop && git pull && git fetch --prune`<br>웹에서 병합했으면 `git flow feature delete <이름>`도 |
 
@@ -355,6 +359,7 @@ rebase는 내 커밋을 새 커밋으로 다시 만들기 때문에, 이미 올�
 | 브랜치 이름을 잘못 지음 | — | 그 브랜치 위에서 `git flow rename <새 이름>` |
 | feature를 안 만들고 `develop`에 바로 커밋함 (아직 push 안 함) | — | `git switch -c feature/<이름>`로 지금 커밋을 새 브랜치에 담고<br>`git switch develop && git reset --hard origin/develop`로 develop을 되돌림 |
 | finish 중 충돌 | `Merge conflict detected while finishing feature/x` | 충돌 파일을 고치고 `git add <파일>`<br>`git flow feature finish x --continue`<br>(그만두려면 `git flow feature finish x --abort`) |
+| PR 직후 CI 확인 | `no checks reported` | 아직 CI가 등록되지 않은 것. 몇 초 뒤 `gh pr checks --watch` 다시 실행 |
 | 만들던 기능을 버림 | — | `git flow feature delete <이름>` (합치지 않고 지움) |
 
 충돌이 나면 이미 `develop`으로 이동한 상태라서 짧은 명령 `git flow finish --continue`는 "주제 브랜치가 아니다"라며 동작하지 않는다. **종류와 이름을 붙인다**(`feature finish x --continue`).
@@ -506,7 +511,7 @@ git flow feature start input-validation          # ②
 # … 작업, 커밋 …                                  # ③
 git flow publish                                 # ④
 gh pr create --fill                              # ⑤ 기본 브랜치가 develop
-gh pr checks --watch                             # ⑥
+gh pr checks --watch                             # ⑥ cpp·swift 두 줄 pass 확인 (no checks reported면 다시)
 gh pr merge --merge --delete-branch              # ⑦
 git switch develop && git pull && git fetch --prune   # ⑧ (웹에서 병합했으면 git flow feature delete input-validation 도)
 ```
