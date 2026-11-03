@@ -8,6 +8,7 @@
 #include "marine/geodesy.hpp"
 
 #include "angles.hpp"
+#include "validation.hpp"
 
 // 곱셈·덧셈을 FMA 하나로 합치지 않는다. 합치면 같은 점의 거리가 0이 아니게 되는 등
 // 상쇄를 노린 식이 어긋난다. SwiftPM은 컴파일 플래그를 줄 수 없어 소스에 둔다.
@@ -61,6 +62,9 @@ double lambda_coefficient(double f, double cos2_alpha) noexcept {
 
 std::expected<InverseSolution, GeodesyError>
 vincenty_inverse(Coordinate from, Coordinate to, const Ellipsoid& ellipsoid) noexcept {
+    if (!detail::is_valid(from) || !detail::is_valid(to) || !detail::is_valid(ellipsoid))
+        return std::unexpected(GeodesyError::invalid_argument);
+
     const double a = ellipsoid.semi_major_axis;
     const double f = ellipsoid.flattening;
     const double b = a * (1 - f);
@@ -121,6 +125,10 @@ vincenty_inverse(Coordinate from, Coordinate to, const Ellipsoid& ellipsoid) noe
 
 std::expected<DirectSolution, GeodesyError>
 vincenty_direct(Coordinate from, double bearing, double distance, const Ellipsoid& ellipsoid) noexcept {
+    if (!detail::is_valid(from) || !std::isfinite(bearing) || !std::isfinite(distance) ||
+        !detail::is_valid(ellipsoid))
+        return std::unexpected(GeodesyError::invalid_argument);
+
     const double a = ellipsoid.semi_major_axis;
     const double f = ellipsoid.flattening;
     const double b = a * (1 - f);

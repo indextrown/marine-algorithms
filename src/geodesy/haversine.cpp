@@ -1,6 +1,7 @@
 #include "marine/geodesy.hpp"
 
 #include "angles.hpp"
+#include "validation.hpp"
 
 // 곱셈·덧셈을 FMA 하나로 합치지 않는다. 합치면 같은 점의 거리가 0이 아니게 되는 등
 // 상쇄를 노린 식이 어긋난다. SwiftPM은 컴파일 플래그를 줄 수 없어 소스에 둔다.
@@ -9,13 +10,19 @@
 #endif
 
 #include <cmath>
+#include <limits>
 
 namespace marine::geodesy {
 
 using detail::to_radians;
 using detail::to_degrees;
 
+namespace {
+constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
+} // namespace
+
 double haversine_distance(Coordinate from, Coordinate to) noexcept {
+    if (!detail::is_valid(from) || !detail::is_valid(to)) return kNaN;
     const double phi1 = to_radians(from.latitude);
     const double phi2 = to_radians(to.latitude);
     const double dphi = phi2 - phi1;
@@ -29,6 +36,7 @@ double haversine_distance(Coordinate from, Coordinate to) noexcept {
 }
 
 double initial_bearing(Coordinate from, Coordinate to) noexcept {
+    if (!detail::is_valid(from) || !detail::is_valid(to)) return kNaN;
     const double phi1 = to_radians(from.latitude);
     const double phi2 = to_radians(to.latitude);
     const double dlambda = to_radians(to.longitude - from.longitude);

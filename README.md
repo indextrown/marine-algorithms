@@ -28,6 +28,8 @@
 | C     | `MA_OK`, 결과는 `out`에 | `MA_NOT_CONVERGED`, `out`은 그대로                 |
 | Swift | 값을 반환               | `throw GeodesyError.notConverged`              |
 
+잘못된 입력(위도 [-90, 90] 밖, NaN·무한대)은 `invalid_argument` / `MA_INVALID_ARGUMENT` / `.invalidArgument`로 따로 보고한다. 실패하지 않는 하버사인 함수는 NaN을 돌려준다. 자세한 규칙은 `docs/DESIGN.md`.
+
 ## 구조
 
 ```
@@ -85,6 +87,8 @@ do {
     print(d.destination)   // 남동쪽 500km 지점
 } catch .notConverged {
     // 대척점 근처. 하버사인으로 대신한다.
+} catch .invalidArgument {
+    // 좌표가 범위 밖이거나 NaN이다. 입력을 고친다.
 }
 ```
 
@@ -107,5 +111,5 @@ iOS 17 이상에서 돌아간다. 예제를 더하려면 `demo/MarineAlgorithmsD
 
 | 함수 | 지구 모양 | 정확도 | 실패 |
 |---|---|---|---|
-| `haversine_distance` | 구 | 최대 약 0.5% | 없음 |
+| `haversine_distance` | 구 | 최대 약 0.5% | 없음(잘못된 입력은 NaN) |
 | `vincenty_inverse` / `_direct` | WGS84 타원체 | 0.1mm 이내 | 대척점 근처에서 역문제가 `not_converged` |

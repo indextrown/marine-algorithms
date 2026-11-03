@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 
 using namespace marine::geodesy;
 using marine::test::angle_diff;
@@ -81,5 +82,47 @@ TEST_CASE("vincenty 경계 경우") {
         const auto r = vincenty_inverse({35.1028, 129.0403}, {33.5902, 130.4017}, sphere);
         REQUIRE(r);
         CHECK_THAT(r->distance, WithinAbs(haversine_distance({35.1028, 129.0403}, {33.5902, 130.4017}), 1e-6));
+    }
+}
+
+TEST_CASE("vincenty: 잘못된 입력은 invalid_argument") {
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    const Coordinate ok{35, 129};
+    const Coordinate bad[] = {
+        {nan, 0}, {0, nan}, {inf, 0}, {-inf, 0}, {0, inf}, {0, -inf}, {90.000001, 0}, {-90.000001, 0},
+    };
+
+    for (const Coordinate c : bad) {
+        CAPTURE(c.latitude, c.longitude);
+        auto r1 = vincenty_inverse(c, ok);
+        REQUIRE_FALSE(r1);
+        CHECK(r1.error() == GeodesyError::invalid_argument);
+        auto r2 = vincenty_inverse(ok, c);
+        REQUIRE_FALSE(r2);
+        CHECK(r2.error() == GeodesyError::invalid_argument);
+        auto r3 = vincenty_direct(c, 0, 1000);
+        REQUIRE_FALSE(r3);
+        CHECK(r3.error() == GeodesyError::invalid_argument);
+    }
+
+    SECTION("정문제의 방위·거리") {
+        for (const double x : {nan, inf, -inf}) {
+            CHECK(vincenty_direct(ok, x, 1000).error() == GeodesyError::invalid_argument);
+            CHECK(vincenty_direct(ok, 0, x).error() == GeodesyError::invalid_argument);
+        }
+    }
+    SECTION("타원체") {
+        for (const Ellipsoid e : {Ellipsoid{0, 0}, Ellipsoid{-1, 0}, Ellipsoid{nan, 0}, Ellipsoid{inf, 0},
+                                  Ellipsoid{6378137, -0.1}, Ellipsoid{6378137, 1}, Ellipsoid{6378137, nan}}) {
+            CAPTURE(e.semi_major_axis, e.flattening);
+            CHECK(vincenty_inverse(ok, {34, 130}, e).error() == GeodesyError::invalid_argument);
+            CHECK(vincenty_direct(ok, 0, 1000, e).error() == GeodesyError::invalid_argument);
+        }
+    }
+    SECTION("경계값은 계산한다: 위도 ±90, 경도 범위 밖(유한값)") {
+        CHECK(vincenty_inverse({90, 0}, {-90, 0}).has_value());
+        CHECK(vincenty_inverse({0, 0}, {0, 361}).has_value());
+        CHECK(vincenty_direct({-90, 0}, 0, 1000).has_value());
     }
 }

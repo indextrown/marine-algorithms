@@ -67,30 +67,37 @@ public struct DirectSolution: Hashable, Sendable {
 public enum GeodesyError: Error, Hashable, Sendable {
     /// 반복 계산이 수렴하지 않았다. Vincenty 역문제에서 두 점이 거의 대척점일 때 생긴다.
     case notConverged
+    /// 입력이 잘못됐다. 위도가 [-90, 90] 밖이거나, 위도·경도·방위·거리가 NaN·무한대이거나,
+    /// 타원체가 장반경 > 0, 편평률 [0, 1)을 벗어났다.
+    case invalidArgument
 
+    /// C의 `ma_status`(MA_OK 제외)를 옮긴다. C에 상태값을 더하면 여기에도 case를 더한다.
     init(_ status: ma_status) {
-        // MA_INVALID_ARGUMENT는 out을 항상 넘기므로 여기까지 오지 않는다.
-        precondition(status == MA_NOT_CONVERGED, "unexpected ma_status \(status.rawValue)")
-        self = .notConverged
+        switch status {
+        case MA_NOT_CONVERGED: self = .notConverged
+        case MA_INVALID_ARGUMENT: self = .invalidArgument
+        default: preconditionFailure("ma_status \(status.rawValue)에 맞는 GeodesyError case가 없다")
+        }
     }
 }
 
 public enum Geodesy {
     // MARK: 구면 (하버사인)
 
-    /// 대권 거리(m). 하버사인 공식.
+    /// 대권 거리(m). 하버사인 공식. 잘못된 좌표면 NaN.
     public static func haversineDistance(from: Coordinate, to: Coordinate) -> Double {
         ma_haversine_distance(from.c, to.c)
     }
 
-    /// 처음 방위(도, 진북 기준 시계 방향 [0, 360)).
+    /// 처음 방위(도, 진북 기준 시계 방향 [0, 360)). 잘못된 좌표면 NaN.
     public static func initialBearing(from: Coordinate, to: Coordinate) -> Double {
         ma_initial_bearing(from.c, to.c)
     }
 
     // MARK: 타원체 (Vincenty 1975)
 
-    /// 두 점 사이의 측지선 거리와 방위. 대척점 근처에서 수렴하지 않으면 `.notConverged`.
+    /// 두 점 사이의 측지선 거리와 방위. 대척점 근처에서 수렴하지 않으면 `.notConverged`,
+    /// 잘못된 입력이면 `.invalidArgument`.
     public static func vincentyInverse(
         from: Coordinate, to: Coordinate, ellipsoid: Ellipsoid = .wgs84
     ) throws(GeodesyError) -> InverseSolution {
@@ -100,7 +107,7 @@ public enum Geodesy {
         return InverseSolution(out)
     }
 
-    /// 출발점에서 `bearing`(도) 방향으로 `distance`(m)만큼 간 도착점.
+    /// 출발점에서 `bearing`(도) 방향으로 `distance`(m)만큼 간 도착점. 잘못된 입력이면 `.invalidArgument`.
     public static func vincentyDirect(
         from: Coordinate, bearing: Double, distance: Double, ellipsoid: Ellipsoid = .wgs84
     ) throws(GeodesyError) -> DirectSolution {

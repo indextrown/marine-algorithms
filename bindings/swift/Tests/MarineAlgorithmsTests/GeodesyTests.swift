@@ -69,4 +69,32 @@ struct GeodesyTests {
         let h = Geodesy.haversineDistance(from: busan, to: fukuoka)
         #expect(abs(v.distance - h) < 1e-6)
     }
+
+    // MARK: 잘못된 입력
+
+    @Test(arguments: [
+        Coordinate(latitude: .nan, longitude: 0),
+        Coordinate(latitude: 0, longitude: .infinity),
+        Coordinate(latitude: 90.000001, longitude: 0),
+    ])
+    func invalidCoordinate(_ bad: Coordinate) {
+        #expect(Geodesy.haversineDistance(from: bad, to: busan).isNaN)
+        #expect(Geodesy.initialBearing(from: busan, to: bad).isNaN)
+        #expect(throws: GeodesyError.invalidArgument) {
+            try Geodesy.vincentyInverse(from: bad, to: busan)
+        }
+        #expect(throws: GeodesyError.invalidArgument) {
+            try Geodesy.vincentyDirect(from: bad, bearing: 0, distance: 1_000)
+        }
+    }
+
+    @Test func invalidDirectArguments() {
+        #expect(throws: GeodesyError.invalidArgument) {
+            try Geodesy.vincentyDirect(from: busan, bearing: .nan, distance: 1_000)
+        }
+        #expect(throws: GeodesyError.invalidArgument) {
+            try Geodesy.vincentyDirect(from: busan, bearing: 0, distance: 1_000,
+                                       ellipsoid: Ellipsoid(semiMajorAxis: 0, flattening: 0))
+        }
+    }
 }
