@@ -292,22 +292,25 @@ gh pr checks --watch
 
 ### ⑦ 병합
 
-GitHub PR 화면에서 **Create a merge commit**으로 병합하고 브랜치를 지운다. 터미널에서는:
+둘 중 하나로 한다. **어디서 병합했느냐에 따라 ⑧이 달라진다.**
 
-```sh
-gh pr merge --merge --delete-branch
-```
+| 어디서 | 방법 | 로컬 feature 브랜치 |
+|---|---|---|
+| 터미널 | `gh pr merge --merge --delete-branch` | gh가 원격·로컬 브랜치를 모두 지우고 `develop`으로 옮겨 준다 |
+| GitHub 웹 | PR 화면에서 **Create a merge commit** → **Delete branch** | 원격만 지워진다. 로컬은 남아 있다 |
 
 ### ⑧ 로컬 정리
 
 ```sh
 git switch develop
 git pull                                        # 병합된 develop 받기
-git flow feature delete input-validation        # 로컬 feature 브랜치 지우기
+git flow feature delete input-validation        # 웹에서 병합했을 때만. 터미널(gh)로 병합했으면 이미 지워졌다
 git fetch --prune                               # 지워진 원격 브랜치 표시도 정리
 ```
 
-`git flow overview`의 `Active topic branches`가 비어 있으면 끝이다.
+gh로 병합한 뒤 `feature delete`를 하면 `Error: start point branch 'feature/input-validation' does not exist`가 나온다. 이미 지워졌다는 뜻이니 무시하고 다음 줄로 간다.
+
+`git flow overview`의 `Active topic branches`가 `No active topic branches`이면 끝이다.
 
 ### 하는 중에 develop이 바뀌었다면 (필요할 때만)
 
@@ -341,7 +344,7 @@ rebase는 내 커밋을 새 커밋으로 다시 만들기 때문에, 이미 올�
 | ⑤ PR | `gh pr create --fill` |
 | ⑥ CI | `gh pr checks --watch` |
 | ⑦ 병합 | `gh pr merge --merge --delete-branch` |
-| ⑧ 정리 | `git switch develop && git pull && git flow feature delete <이름> && git fetch --prune` |
+| ⑧ 정리 | `git switch develop && git pull && git fetch --prune`<br>웹에서 병합했으면 `git flow feature delete <이름>`도 |
 
 ## 실수했을 때
 
@@ -505,7 +508,7 @@ git flow publish                                 # ④
 gh pr create --fill                              # ⑤ 기본 브랜치가 develop
 gh pr checks --watch                             # ⑥
 gh pr merge --merge --delete-branch              # ⑦
-git switch develop && git pull && git flow feature delete input-validation && git fetch --prune   # ⑧
+git switch develop && git pull && git fetch --prune   # ⑧ (웹에서 병합했으면 git flow feature delete input-validation 도)
 ```
 
 ### 버전 배포
